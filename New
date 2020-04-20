@@ -1,0 +1,100 @@
+*connect your raspberry pi to router using lan cable for internet access
+
+sudo apt install isc-dhcp-server hostapd -y
+
+sudo nano /etc/network/interfaces
+
+
+auto lo
+auto eth0
+
+         iface eth0 inet dhcp
+
+allow-hotplug wlan0
+
+         iface  wlan0 inet static
+         address 192.168.1.101    
+         netmask 255.255.255.0
+
+
+just save the file
+
+
+sudo nano /etc/dhcp/dhcpd.conf 
+
+#option domain-name "example.org"; (add # front of this line)
+#option domain-name-servers ns1.example.org, ns2.example.org;(add # front of this line)
+
+
+authoritative;(remove # from this line)
+
+then go to end of this file 
+
+subnet 192.168.1.0 netmask 255.255.255.0 {
+range 192.168.1.20 192.168.1.60;
+option routers 192.168.1.101;
+option broadcast-address 192.168.1.255;
+default-lease-time 600;
+max-lease-time 7200;
+option domain-name-servers 8.8.8.8, 8.8.4.4;
+
+}
+
+add this code at end of file and save file
+
+
+sudo nano /etc/default/isc-dhcp-server
+
+INTERFACESv4="wlan0" (add wlan0 interface)
+
+#INTERFACESv6=""(add # in front of this line)
+
+cd /etc/hostapd
+
+make new file name inside /etc/hostapd
+
+sudo nano hostapd.conf
+
+interface=wlan0
+driver=nl80211
+ssid=FREEDOMWEBTECH
+hw_mode=g
+channel=7
+wmm_enabled=0
+macaddr_acl=0
+auth_algs=1
+ignore_broadcast_ssid=0
+wpa=2
+wpa_passphrase=freedomwebtech
+wpa_key_mgmt=WPA-PSK
+wpa_pairwise=TKIP
+rsn_pairwise=CCMP
+
+then save the file
+
+then open vpnbook website download openvpn file unzip file and connect openvpn as i mention in video
+
+then become root user and run this command as root user 
+
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
+then exit from root user
+
+now setup iptables rules
+sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+sudo iptables -t nat -A POSTROUTING -o tun2 -j MASQUERADE  (i mention tun2 beacuse vpnbook create tun2 interface your case it may be tun1 or tun3 so check before you mention)
+
+
+
+sudo systemctl unmask hostapd
+sudo systemctl enable hostapd
+sudo systemctl start hostapd
+suod /etc/init.d/isc-dhcp-server restart
+
+
+
+when you reboot next time just run iptables commands and hostapd commands 
+
+
+
+
